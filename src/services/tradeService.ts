@@ -2,7 +2,7 @@
  * 交易服务 — 对接 FastAPI 后端
  */
 
-const TRADE_API = 'http://localhost:8000';
+const TRADE_API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 export interface TradeRequest {
   signal_id: string;

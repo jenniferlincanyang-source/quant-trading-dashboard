@@ -33,6 +33,7 @@ jobs:
       - run: npx next build
         env:
           NODE_ENV: production
+          NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL }}
 
       - uses: actions/upload-pages-artifact@v3
         with:

@@ -9,7 +9,8 @@ import * as mock from './mockData';
 // 主源: 腾讯财经 + 新浪财经 (Python 脚本内部双源降级)
 // 兜底: Mock 数据
 
-const API_BASE = '/api';
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || '';
+const API_BASE = BACKEND_URL ? `${BACKEND_URL}/api` : '/api';
 
 async function fetchLive<T>(endpoint: string): Promise<T | null> {
   try {
