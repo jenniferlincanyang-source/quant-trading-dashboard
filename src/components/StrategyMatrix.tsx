@@ -52,7 +52,10 @@ export default function StrategyMatrix() {
         <span className="text-sm font-medium">六大量化策略信号总览</span>
         <InfoTip text="展示趋势跟踪、均值回归、统计套利、高频交易、多因子、事件驱动六大策略的实时信号，全部平铺一目了然。每个策略卡片包含信号列表和策略洞察分析。" />
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+      <div
+        className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 max-h-[800px] overflow-y-auto pr-1"
+        style={{ scrollbarWidth: 'thin', scrollbarColor: '#334155 transparent' }}
+      >
         {STRATEGY_CATEGORIES.map(cat => (
           <StrategyCard
             key={cat.key}
@@ -81,7 +84,7 @@ function StrategyCard({ cat, signals, loading }: {
   const sellCount = signals.filter(s => s.signal === 'sell').length;
 
   return (
-    <div className="rounded-xl border border-[#1e293b] bg-[#111827] flex flex-col h-[460px]">
+    <div className="rounded-xl border border-[#1e293b] bg-[#111827] flex flex-col">
       {/* header */}
       <div className="px-4 py-3 border-b border-[#1e293b] shrink-0">
         <div className="flex items-center justify-between mb-2">
@@ -111,8 +114,8 @@ function StrategyCard({ cat, signals, loading }: {
         </div>
       </div>
 
-      {/* scrollable body: insight + signal list */}
-      <div className="flex-1 overflow-y-auto min-h-0">
+      {/* body: insight + signal list */}
+      <div>
         {/* insight panel */}
         {cat.key === 'event_driven' ? (
           <div className="px-3 pt-2"><EventNewsPanel /></div>
