@@ -111,44 +111,47 @@ function StrategyCard({ cat, signals, loading }: {
         </div>
       </div>
 
-      {/* insight panel */}
-      {cat.key === 'event_driven' ? (
-        <div className="px-3 pt-2 shrink-0"><EventNewsPanel /></div>
-      ) : INSIGHT_TYPES.includes(cat.key as InsightType) ? (
-        <div className="px-3 pt-2 shrink-0"><StrategyInsightPanel type={cat.key as InsightType} /></div>
-      ) : null}
+      {/* scrollable body: insight + signal list */}
+      <div className="flex-1 overflow-y-auto min-h-0">
+        {/* insight panel */}
+        {cat.key === 'event_driven' ? (
+          <div className="px-3 pt-2"><EventNewsPanel /></div>
+        ) : INSIGHT_TYPES.includes(cat.key as InsightType) ? (
+          <div className="px-3 pt-2"><StrategyInsightPanel type={cat.key as InsightType} /></div>
+        ) : null}
 
-      {/* signal list */}
-      <div className="flex-1 overflow-y-auto min-h-0 p-3 space-y-1.5">
-        {loading ? (
-          Array.from({ length: 2 }).map((_, i) => (
-            <div key={i} className="h-14 rounded-lg bg-[#0a0f1a] animate-pulse" />
-          ))
-        ) : signals.length === 0 ? (
-          <div className="text-center text-[#475569] text-xs py-6">暂无信号</div>
-        ) : (
-          signals.map(sig => {
-            const sc = signalColors[sig.signal];
-            return (
-              <div key={sig.id} className="flex items-center gap-2 p-2.5 rounded-lg bg-[#0a0f1a]/60 hover:bg-[#0a0f1a] transition-colors">
-                <div className="w-1 h-10 rounded-full" style={{ background: cat.color }} />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-medium text-white">{sig.stockName}</span>
-                    <span className="text-[10px] text-[#475569]">{sig.stockCode}</span>
-                    <span className={`text-[10px] px-1 py-0.5 rounded ${sc.bg} ${sc.text}`}>{sc.label}</span>
-                    <span className="text-[10px] text-[#475569]">{RISK_LABELS[sig.riskLevel]}</span>
-                  </div>
-                  <div className="flex items-center gap-2 mt-0.5 text-[10px] text-[#64748b]">
-                    <span>{(sig.confidence * 100).toFixed(0)}%</span>
-                    <span>{sig.expectedReturn > 0 ? '+' : ''}{sig.expectedReturn.toFixed(1)}%</span>
-                    <span className="truncate">{sig.factors.slice(0, 2).join(' · ')}</span>
+        {/* signal list */}
+        <div className="p-3 space-y-1.5">
+          {loading ? (
+            Array.from({ length: 2 }).map((_, i) => (
+              <div key={i} className="h-14 rounded-lg bg-[#0a0f1a] animate-pulse" />
+            ))
+          ) : signals.length === 0 ? (
+            <div className="text-center text-[#475569] text-xs py-6">暂无信号</div>
+          ) : (
+            signals.map(sig => {
+              const sc = signalColors[sig.signal];
+              return (
+                <div key={sig.id} className="flex items-center gap-2 p-2.5 rounded-lg bg-[#0a0f1a]/60 hover:bg-[#0a0f1a] transition-colors">
+                  <div className="w-1 h-10 rounded-full" style={{ background: cat.color }} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-medium text-white">{sig.stockName}</span>
+                      <span className="text-[10px] text-[#475569]">{sig.stockCode}</span>
+                      <span className={`text-[10px] px-1 py-0.5 rounded ${sc.bg} ${sc.text}`}>{sc.label}</span>
+                      <span className="text-[10px] text-[#475569]">{RISK_LABELS[sig.riskLevel]}</span>
+                    </div>
+                    <div className="flex items-center gap-2 mt-0.5 text-[10px] text-[#64748b]">
+                      <span>{(sig.confidence * 100).toFixed(0)}%</span>
+                      <span>{sig.expectedReturn > 0 ? '+' : ''}{sig.expectedReturn.toFixed(1)}%</span>
+                      <span className="truncate">{sig.factors.slice(0, 2).join(' · ')}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })
-        )}
+              );
+            })
+          )}
+        </div>
       </div>
     </div>
   );
