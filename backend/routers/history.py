@@ -332,7 +332,7 @@ async def market_proxy(
                 name = stocks[0] if stocks else ""
                 if name:
                     from urllib.parse import quote as urlquote
-                    item["sourceUrl"] = f"https://so.eastmoney.com/web/s?keyword={urlquote(name)}"
+                    item["sourceUrl"] = f"https://gu.qq.com/s?query={urlquote(name)}"
 
     # 异步持久化 (不阻塞响应)
     persist_map = {

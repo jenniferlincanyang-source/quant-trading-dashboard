@@ -915,11 +915,9 @@ def _multi_factor_insights(quotes, now_str, today_str):
 
 
 def _stock_url(code):
-    """生成个股行情页真实链接 (东方财富)"""
-    prefix = '1' if code.startswith(('5', '6', '9')) else '0'
-    return f'https://quote.eastmoney.com/{prefix}{code}.html'
-    """600519 → 1.600519, 000001 → 0.000001 (东方财富 secid)"""
-    return ('1.' if code.startswith(('6', '9')) else '0.') + code
+    """生成个股行情页真实链接 (腾讯财经)"""
+    market = 'sh' if code.startswith(('5', '6', '9')) else 'sz'
+    return f'https://gu.qq.com/{market}{code}'
 
 
 # ═══════════════════════════════════════════
