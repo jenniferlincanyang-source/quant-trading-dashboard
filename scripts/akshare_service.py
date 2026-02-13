@@ -1246,43 +1246,75 @@ def get_trading_alerts():
         price = q.get('price', 0)
         prev = q.get('prevClose', 1) or 1
         amplitude = (high - low) / prev * 100
-        if abs(pct) >= 5:
+        vol = q.get('volume', 0)
+        # 涨跌幅预警 ≥2%
+        if abs(pct) >= 2:
             aid += 1
+            sev = 'critical' if abs(pct) >= 5 else 'warning' if abs(pct) >= 3 else 'info'
             alerts.append({
                 'id': f'ta_{aid}', 'time': now_str.split(' ')[1],
-                'datetime': now_str,
-                'severity': 'critical' if abs(pct) >= 8 else 'warning',
+                'datetime': now_str, 'severity': sev,
                 'category': 'price',
                 'title': f'{q["name"]}{"涨" if pct > 0 else "跌"}{abs(pct):.1f}%',
                 'description': f'当前价{price}，涨跌幅{pct:+.1f}%',
                 'stockCode': q['code'], 'stockName': q['name'],
-                'actionRequired': abs(pct) >= 8,
+                'actionRequired': abs(pct) >= 5,
                 'acknowledged': False,
                 'relatedData': {'价格': str(price), '涨跌幅': f'{pct:+.1f}%'},
             })
-        if turnover >= 8:
+        # 换手率预警 ≥3%
+        if turnover >= 3:
             aid += 1
+            sev = 'critical' if turnover >= 8 else 'warning' if turnover >= 5 else 'info'
             alerts.append({
                 'id': f'ta_{aid}', 'time': now_str.split(' ')[1],
-                'datetime': now_str, 'severity': 'warning',
+                'datetime': now_str, 'severity': sev,
                 'category': 'volume',
                 'title': f'{q["name"]}换手率{turnover:.1f}%',
-                'description': f'换手率异常偏高，可能有大资金进出',
+                'description': f'换手率偏高，可能有大资金进出',
                 'stockCode': q['code'], 'stockName': q['name'],
-                'actionRequired': False, 'acknowledged': False,
+                'actionRequired': turnover >= 8,
+                'acknowledged': False,
                 'relatedData': {'换手率': f'{turnover:.1f}%'},
             })
-        if amplitude >= 7:
+        # 振幅预警 ≥3%
+        if amplitude >= 3:
             aid += 1
+            sev = 'warning' if amplitude >= 5 else 'info'
             alerts.append({
                 'id': f'ta_{aid}', 'time': now_str.split(' ')[1],
-                'datetime': now_str, 'severity': 'info',
+                'datetime': now_str, 'severity': sev,
                 'category': 'price',
                 'title': f'{q["name"]}振幅{amplitude:.1f}%',
                 'description': f'日内振幅较大，最高{high}最低{low}',
                 'stockCode': q['code'], 'stockName': q['name'],
                 'actionRequired': False, 'acknowledged': False,
                 'relatedData': {'最高': str(high), '最低': str(low)},
+            })
+        # 量价背离：涨但量缩 或 跌但量放
+        if pct > 1 and vol > 0 and turnover < 1:
+            aid += 1
+            alerts.append({
+                'id': f'ta_{aid}', 'time': now_str.split(' ')[1],
+                'datetime': now_str, 'severity': 'warning',
+                'category': 'strategy',
+                'title': f'{q["name"]}量价背离（缩量上涨）',
+                'description': f'涨{pct:+.1f}%但换手仅{turnover:.1f}%，上涨持续性存疑',
+                'stockCode': q['code'], 'stockName': q['name'],
+                'actionRequired': False, 'acknowledged': False,
+                'relatedData': {'涨跌幅': f'{pct:+.1f}%', '换手率': f'{turnover:.1f}%'},
+            })
+        elif pct < -1 and turnover >= 5:
+            aid += 1
+            alerts.append({
+                'id': f'ta_{aid}', 'time': now_str.split(' ')[1],
+                'datetime': now_str, 'severity': 'critical',
+                'category': 'strategy',
+                'title': f'{q["name"]}放量下跌',
+                'description': f'跌{pct:.1f}%且换手{turnover:.1f}%，主力可能出逃',
+                'stockCode': q['code'], 'stockName': q['name'],
+                'actionRequired': True, 'acknowledged': False,
+                'relatedData': {'涨跌幅': f'{pct:+.1f}%', '换手率': f'{turnover:.1f}%'},
             })
     alerts.sort(key=lambda x: {'critical': 0, 'warning': 1, 'info': 2}[x['severity']])
     return alerts
