@@ -1,5 +1,6 @@
 'use client';
 import { useState, useCallback } from 'react';
+import Link from 'next/link';
 import Header from '@/components/Header';
 import { useHistoryQuery, usePersistConfig, useRetrospective } from '@/hooks/useHistoryData';
 import { deleteHistory, deleteHistoryRecord } from '@/services/dataService';
@@ -94,7 +95,7 @@ export default function HistoryPage() {
       <main className="mx-auto max-w-[1600px] px-4 py-6 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <a href="/" className="text-[#64748b] hover:text-[#94a3b8]"><ArrowLeft size={16} /></a>
+            <Link href="/" className="text-[#64748b] hover:text-[#94a3b8]"><ArrowLeft size={16} /></Link>
             <Database size={16} className="text-[#8b5cf6]" />
             <h2 className="text-lg font-semibold">历史数据库</h2>
           </div>

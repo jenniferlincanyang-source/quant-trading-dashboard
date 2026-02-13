@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import {
-  ExternalLink, ChevronDown, ChevronUp,
+  ChevronDown, ChevronUp,
   TrendingUp, TrendingDown, Minus, Building2,
 } from 'lucide-react';
 import { useEventNews } from '@/hooks/useMarketData';
@@ -108,10 +108,9 @@ function NewsCard({ news }: { news: EventNews }) {
 
           {/* Source + stocks */}
           <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-            <a href={news.sourceUrl} target="_blank" rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-[10px] text-[#3b82f6] hover:text-[#60a5fa] transition-colors">
-              {news.source} <ExternalLink size={10} />
-            </a>
+            <span className="inline-flex items-center gap-1 text-[10px] text-[#475569]">
+              {news.source}
+            </span>
             {news.verifiedDate && (
               <span className="text-[10px] text-[#475569]">验证 {news.verifiedDate}</span>
             )}

@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import {
-  ExternalLink, ChevronDown, ChevronUp,
+  ChevronDown, ChevronUp,
   TrendingUp, TrendingDown, Minus, Building2, BarChart3,
 } from 'lucide-react';
 import { useStrategyInsights } from '@/hooks/useMarketData';
@@ -116,10 +116,9 @@ function InsightCard({ insight }: { insight: StrategyInsight }) {
           {insight.keyMetrics && <MetricsBar metrics={insight.keyMetrics} />}
 
           <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-            <a href={insight.sourceUrl} target="_blank" rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-[10px] text-[#3b82f6] hover:text-[#60a5fa] transition-colors">
-              {insight.source} <ExternalLink size={10} />
-            </a>
+            <span className="inline-flex items-center gap-1 text-[10px] text-[#475569]">
+              {insight.source}
+            </span>
             {insight.verifiedDate && (
               <span className="text-[10px] text-[#475569]">验证 {insight.verifiedDate}</span>
             )}
