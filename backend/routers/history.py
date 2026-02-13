@@ -324,6 +324,16 @@ async def market_proxy(
     except Exception as e:
         return {"error": str(e)}
 
+    # 补全 insights 的 sourceUrl（确保 Render 部署也能生效）
+    if action == "insights" and isinstance(data, list):
+        for item in data:
+            if not item.get("sourceUrl"):
+                stocks = item.get("relatedStocks", [])
+                name = stocks[0] if stocks else ""
+                if name:
+                    from urllib.parse import quote as urlquote
+                    item["sourceUrl"] = f"https://so.eastmoney.com/web/s?keyword={urlquote(name)}"
+
     # 异步持久化 (不阻塞响应)
     persist_map = {
         "events": "oracle_event",
