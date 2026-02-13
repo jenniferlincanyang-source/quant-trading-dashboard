@@ -115,9 +115,6 @@ function NewsCard({ news }: { news: EventNews }) {
             {news.verifiedDate && (
               <span className="text-[10px] text-[#475569]">验证 {news.verifiedDate}</span>
             )}
-            {news.relatedStocks.map(s => (
-              <span key={s} className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-[#94a3b8]">{s}</span>
-            ))}
           </div>
 
           {/* Analyst toggle */}

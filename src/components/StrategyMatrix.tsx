@@ -25,10 +25,7 @@ export default function StrategyMatrix() {
         <span className="text-sm font-medium">六大量化策略洞察</span>
         <InfoTip text="展示趋势跟踪、均值回归、统计套利、高频交易、多因子、事件驱动六大策略的实时洞察分析，包含机构观点、市场事件等真实信息。" />
       </div>
-      <div
-        className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 max-h-[800px] overflow-y-auto pr-1"
-        style={{ scrollbarWidth: 'thin', scrollbarColor: '#334155 transparent' }}
-      >
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
         {STRATEGY_CATEGORIES.map(cat => (
           <StrategyCard key={cat.key} cat={cat} />
         ))}
@@ -41,9 +38,9 @@ function StrategyCard({ cat }: { cat: typeof STRATEGY_CATEGORIES[number] }) {
   const Icon = ICONS[cat.key];
 
   return (
-    <div className="rounded-xl border border-[#1e293b] bg-[#111827] flex flex-col">
+    <div className="rounded-xl border border-[#1e293b] bg-[#111827] flex flex-col h-[420px]">
       {/* header */}
-      <div className="px-4 py-3 border-b border-[#1e293b]">
+      <div className="px-4 py-3 border-b border-[#1e293b] shrink-0">
         <div className="flex items-center gap-2 mb-1">
           <Icon size={16} style={{ color: cat.color }} />
           <span className="text-sm font-medium">{cat.label}</span>
@@ -51,8 +48,11 @@ function StrategyCard({ cat }: { cat: typeof STRATEGY_CATEGORIES[number] }) {
         <p className="text-[10px] text-[#475569]">{cat.logic}</p>
       </div>
 
-      {/* insight only */}
-      <div className="p-3">
+      {/* insight - scrollable */}
+      <div
+        className="flex-1 min-h-0 overflow-y-auto p-3"
+        style={{ scrollbarWidth: 'thin', scrollbarColor: '#334155 transparent' }}
+      >
         {cat.key === 'event_driven' ? (
           <EventNewsPanel />
         ) : INSIGHT_TYPES.includes(cat.key as InsightType) ? (
