@@ -9,6 +9,7 @@ import {
   TrendingUp, TrendingDown, Minus, ArrowLeft, Calendar, AlertTriangle,
   Building2, Briefcase, BarChart3, Zap,
 } from 'lucide-react';
+import DatePicker from '@/components/DatePicker';
 
 const TYPE_OPTIONS = [
   { value: '', label: '全部类型' },
@@ -168,9 +169,9 @@ function FilterBar({
         {IMPACT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
       </select>
       <div className="flex items-center gap-1">
-        <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className={cls} />
+        <DatePicker value={startDate} onChange={setStartDate} placeholder="开始日期" />
         <span className="text-[#475569] text-xs">至</span>
-        <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className={cls} />
+        <DatePicker value={endDate} onChange={setEndDate} placeholder="结束日期" />
       </div>
       <div className="relative flex-1 min-w-[200px]">
         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#475569]" />
@@ -276,8 +277,7 @@ function RetroView({ date, setDate, data, loading }: {
       <div className="flex items-center gap-3 p-3 rounded-xl border border-[#1e293b] bg-[#111827]/60">
         <Calendar size={14} className="text-[#8b5cf6]" />
         <span className="text-xs text-[#94a3b8]">选择回溯日期</span>
-        <input type="date" value={date} onChange={e => setDate(e.target.value)}
-          className="bg-[#0a0f1a] border border-[#1e293b] rounded-lg px-3 py-2 text-xs text-[#e2e8f0] outline-none focus:border-[#3b82f6]" />
+        <DatePicker value={date} onChange={setDate} placeholder="选择回溯日期" />
       </div>
       {loading && (
         <div className="grid grid-cols-2 gap-4">
@@ -496,7 +496,7 @@ function DeleteModal({ onClose, onDone }: { onClose: () => void; onDone: () => v
           {mode === 'date' && (
             <div className="flex items-center gap-2">
               <span className="text-xs text-[#94a3b8]">删除此日期之前的数据</span>
-              <input type="date" value={beforeDate} onChange={e => setBeforeDate(e.target.value)} className={cls} />
+              <DatePicker value={beforeDate} onChange={setBeforeDate} placeholder="选择截止日期" />
             </div>
           )}
 
