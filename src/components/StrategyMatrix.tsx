@@ -7,6 +7,9 @@ import {
 import { LineChart, Line, ResponsiveContainer } from 'recharts';
 import { useStrategySignals } from '@/hooks/useMarketData';
 import { executeTrade } from '@/services/tradeService';
+import EventNewsPanel from './EventNewsPanel';
+import StrategyInsightPanel from './StrategyInsightPanel';
+import type { InsightType } from '@/services/types';
 import {
   STRATEGY_CATEGORIES, STRATEGY_CATEGORY_MAP, RISK_LABELS,
 } from '@/services/types';
@@ -281,6 +284,18 @@ export default function StrategyMatrix() {
       <div className="flex-1 flex flex-col min-w-0 p-4">
         <DetailHeader meta={currentMeta} signals={currentSignals} avgConf={avgConf} avgReturn={avgReturn} />
         <RiskFilter value={filterRisk} onChange={setFilterRisk} />
+        {/* 事件驱动 — 新闻来源 + 机构分析面板 */}
+        {active === 'event_driven' && (
+          <div className="mt-3 mb-2">
+            <EventNewsPanel />
+          </div>
+        )}
+        {/* 趋势跟踪/均值回归/统计套利/高频交易/多因子 — 策略洞察面板 */}
+        {(['trend_follow', 'mean_reversion', 'stat_arb', 'hft', 'multi_factor'] as InsightType[]).includes(active as InsightType) && (
+          <div className="mt-3 mb-2">
+            <StrategyInsightPanel type={active as InsightType} />
+          </div>
+        )}
         <div className="flex-1 overflow-y-auto mt-3 space-y-2">
           {loading ? (
             Array.from({ length: 3 }).map((_, i) => (

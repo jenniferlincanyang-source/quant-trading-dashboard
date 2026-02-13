@@ -2,6 +2,7 @@
 import { Radio, ArrowUpCircle, ArrowDownCircle, Zap, BarChart3, Repeat } from 'lucide-react';
 import { useOracleEvents } from '@/hooks/useMarketData';
 import type { OracleEvent } from '@/services/types';
+import InfoTip from './InfoTip';
 
 const typeIcons: Record<OracleEvent['type'], typeof Zap> = {
   big_order: Zap,
@@ -38,6 +39,7 @@ export default function OracleStream({ stockCode }: { stockCode?: string }) {
         <div className="flex items-center gap-2">
           <Radio className="w-4 h-4 text-[#ef4444] animate-pulse-dot" />
           <span className="text-sm font-medium">Oracle 真相流</span>
+          <InfoTip text="实时监控全市场成交异常：大单涌入、涨跌停封板、突然放量、大宗交易等。每条事件标注影响方向（利好/利空/中性），后续由历史验证模块回测准确率。" />
           {stockCode && (
             <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#3b82f6]/10 text-[#3b82f6]">
               {stockCode}
@@ -68,7 +70,19 @@ export default function OracleStream({ stockCode }: { stockCode?: string }) {
                     <span className="text-xs text-[#64748b]">{event.stockCode}</span>
                     <span className="text-sm font-medium">{event.stockName}</span>
                   </div>
-                  <span className="text-[10px] text-[#475569]">{event.time}</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] text-[#475569]">{event.datetime || event.time}</span>
+                    {event.lagDays > 0 && (
+                      <span className="text-[10px] px-1 py-0.5 rounded bg-amber-500/10 text-amber-400">
+                        滞后{event.lagDays}天
+                      </span>
+                    )}
+                    {event.lagDays === 0 && (
+                      <span className="text-[10px] px-1 py-0.5 rounded bg-emerald-500/10 text-emerald-400">
+                        实时
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <p className="text-xs text-[#94a3b8] mb-1">{event.description}</p>
                 <div className="flex items-center gap-2">
@@ -82,6 +96,11 @@ export default function OracleStream({ stockCode }: { stockCode?: string }) {
                   <span className="text-[10px] text-[#475569]">
                     ¥{(event.amount / 10000).toFixed(1)}亿
                   </span>
+                  {event.verifiedDate && (
+                    <span className="text-[10px] text-[#475569]">
+                      验证 {event.verifiedDate}
+                    </span>
+                  )}
                 </div>
               </div>
             );

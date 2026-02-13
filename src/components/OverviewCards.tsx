@@ -1,5 +1,6 @@
 'use client';
 import { TrendingUp, Flame, Target, ShieldCheck } from 'lucide-react';
+import InfoTip from './InfoTip';
 import { useMarketOverview } from '@/hooks/useMarketData';
 import type { DataSource } from '@/services/types';
 
@@ -59,6 +60,7 @@ export default function OverviewCards() {
           <div className="flex items-center gap-2 text-[#64748b] text-xs mb-3">
             <c.icon className="w-4 h-4" style={{ color: c.color }} />
             {c.label}
+            {i === 0 && <InfoTip text="市场情绪指数综合涨跌家数比、涨停/跌停数量、成交量变化等指标计算，0-100 区间，>50 偏多，<50 偏空。Oracle 最热行业和量化胜率来自三源交叉验证数据。" />}
           </div>
           <div className="flex items-baseline gap-2">
             <span className="text-2xl font-bold" style={{ color: c.color }}>{c.value}</span>

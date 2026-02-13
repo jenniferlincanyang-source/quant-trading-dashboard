@@ -8,7 +8,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from config import settings
 from routers import trade, ws
 from routers.strategy import router as strategy_router
+from routers.history import router as history_router
 from services.trader_factory import get_trader
+from services.scheduler import scheduler
 from strategies.engine import engine as strategy_engine
 from db import close_db
 
@@ -40,8 +42,14 @@ async def lifespan(app: FastAPI):
             await asyncio.sleep(300)  # 每 5 分钟
 
     task = asyncio.create_task(_strategy_loop())
+
+    # 启动数据采集调度器
+    await scheduler.start()
+    logger.info("数据采集调度器已启动")
+
     yield
     task.cancel()
+    await scheduler.stop()
     await close_db()
     logger.info("交易服务关闭")
 
@@ -66,6 +74,7 @@ app.add_middleware(
 app.include_router(trade.router)
 app.include_router(ws.router)
 app.include_router(strategy_router)
+app.include_router(history_router)
 
 
 @app.get("/health")

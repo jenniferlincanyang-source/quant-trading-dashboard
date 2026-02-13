@@ -1,17 +1,20 @@
 'use client';
-import { BarChart2 } from 'lucide-react';
-import { useKLineData } from '@/hooks/useMarketData';
+import { useState } from 'react';
+import { BarChart2, Waves } from 'lucide-react';
+import InfoTip from './InfoTip';
+import { useKLineWithFlow } from '@/hooks/useMarketData';
 import {
   ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, ReferenceLine, Bar, Cell,
 } from 'recharts';
 
 export default function KLineChart({ code = '688981', stockName = '中芯国际' }: { code?: string; stockName?: string }) {
-  const { data, sources, confidence, loading } = useKLineData(code);
+  const { data, sources, confidence, loading } = useKLineWithFlow(code);
+  const [showFlow, setShowFlow] = useState(true);
 
   if (loading || !data) {
     return (
-      <div className="rounded-xl border border-[#1e293b] bg-[#111827] p-5 h-[420px] flex items-center justify-center">
+      <div className="rounded-xl border border-[#1e293b] bg-[#111827] p-5 h-[500px] flex items-center justify-center">
         <div className="text-[#475569] text-sm animate-pulse">加载K线数据...</div>
       </div>
     );
@@ -20,10 +23,9 @@ export default function KLineChart({ code = '688981', stockName = '中芯国际'
   const chartData = data.map(d => ({
     ...d,
     isUp: d.close >= d.open,
-    // 涨跌幅
     changePercent: (((d.close - d.open) / d.open) * 100).toFixed(2),
-    // 成交量（万手）
     vol: Math.round(d.volume / 10000),
+    netFlow: (d.mainInflow || 0) / 10000,
   }));
 
   return (
@@ -32,9 +34,18 @@ export default function KLineChart({ code = '688981', stockName = '中芯国际'
         <div className="flex items-center gap-2">
           <BarChart2 className="w-4 h-4 text-[#f59e0b]" />
           <span className="text-sm font-medium">{code} {stockName}</span>
+          <InfoTip text="展示个股日K线（收盘价走势）、成交量柱状图和主力资金流向叠加图。可切换显示/隐藏资金流层，红色柱体为阳线（收盘>开盘），绿色为阴线。" />
           <span className="text-xs text-[#475569]">收盘价 + 成交量 + 夏普比率</span>
         </div>
-        <Legend />
+        <div className="flex items-center gap-2">
+          <button onClick={() => setShowFlow(!showFlow)}
+            className={`flex items-center gap-1 text-[10px] px-2 py-1 rounded-full transition-colors ${
+              showFlow ? 'bg-[#3b82f6] text-white' : 'bg-[#1e293b] text-[#94a3b8]'
+            }`}>
+            <Waves className="w-3 h-3" /> 资金流
+          </button>
+          <Legend />
+        </div>
       </div>
 
       {/* 价格 + SR 图 */}
@@ -73,6 +84,26 @@ export default function KLineChart({ code = '688981', stockName = '中芯国际'
           </ComposedChart>
         </ResponsiveContainer>
       </div>
+
+      {/* 主力资金流向 */}
+      {showFlow && (
+        <div className="px-4 pb-2 h-[80px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <ComposedChart data={chartData} margin={{ top: 0, right: 50, bottom: 0, left: 10 }}>
+              <XAxis dataKey="date" tick={false} axisLine={{ stroke: '#1e293b' }} />
+              <YAxis tick={{ fill: '#64748b', fontSize: 9 }} axisLine={{ stroke: '#1e293b' }} tickFormatter={v => `${v}万`} />
+              <ReferenceLine y={0} stroke="#334155" />
+              <Tooltip contentStyle={{ background: '#1e293b', border: 'none', borderRadius: 8, fontSize: 11 }}
+                formatter={(v) => [`${Number(v).toFixed(0)}万`, '主力净流入']} />
+              <Bar dataKey="netFlow" barSize={6} isAnimationActive={false}>
+                {chartData.map((d, i) => (
+                  <Cell key={i} fill={d.netFlow >= 0 ? '#3b82f6' : '#ef4444'} fillOpacity={0.7} />
+                ))}
+              </Bar>
+            </ComposedChart>
+          </ResponsiveContainer>
+        </div>
+      )}
     </div>
   );
 }
@@ -91,6 +122,9 @@ function Legend() {
       </span>
       <span className="flex items-center gap-1">
         <span className="w-2 h-2 rounded-full bg-[#f59e0b]" /> SR
+      </span>
+      <span className="flex items-center gap-1">
+        <span className="w-2 h-2 rounded-full bg-[#3b82f6]" /> 流入
       </span>
     </div>
   );
@@ -115,6 +149,14 @@ function KLineTooltip({ active, payload, label }: any) {
         <span className="text-right">{d.vol}万手</span>
         <span className="text-[#f59e0b]">SR</span>
         <span className="text-right text-[#f59e0b]">{d.sharpeRatio}</span>
+        {d.netFlow !== undefined && (
+          <>
+            <span className="text-[#3b82f6]">主力净流入</span>
+            <span className={`text-right ${d.netFlow >= 0 ? 'text-[#3b82f6]' : 'text-[#ef4444]'}`}>
+              {d.netFlow.toFixed(0)}万
+            </span>
+          </>
+        )}
       </div>
     </div>
   );

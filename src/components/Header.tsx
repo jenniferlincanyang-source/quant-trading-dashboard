@@ -1,13 +1,15 @@
 'use client';
-import { useState, useRef, useEffect } from 'react';
-import { Search, Sparkles, X } from 'lucide-react';
+import { useState, useRef, useEffect, useSyncExternalStore } from 'react';
+import { Search, Sparkles, X, Database, Wifi, WifiOff } from 'lucide-react';
 import { useSearch } from '@/hooks/useSearch';
+import { subscribeSourceStatus, getSourceSnapshot, getServerSnapshot } from '@/services/dataService';
 
 export default function Header() {
   const { query, setQuery, results } = useSearch();
   const [focused, setFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const status = useSyncExternalStore(subscribeSourceStatus, getSourceSnapshot, getServerSnapshot);
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -56,10 +58,28 @@ export default function Header() {
         </div>
 
         <div className="flex items-center gap-3 text-xs text-[#64748b] shrink-0">
-          <span className="flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#10b981] animate-pulse-dot" />
-            三源在线
-          </span>
+          <a href="/history" className="flex items-center gap-1 hover:text-[#94a3b8] transition-colors">
+            <Database className="w-3.5 h-3.5" />
+            历史数据
+          </a>
+          {status.overall === 'live' ? (
+            <span className="flex items-center gap-1 text-[#10b981]">
+              <Wifi className="w-3.5 h-3.5" />
+              <span className="w-1.5 h-1.5 rounded-full bg-[#10b981] animate-pulse-dot" />
+              实时数据
+            </span>
+          ) : status.overall === 'mock' ? (
+            <span className="flex items-center gap-1 text-[#ef4444]">
+              <WifiOff className="w-3.5 h-3.5" />
+              <span className="w-1.5 h-1.5 rounded-full bg-[#ef4444] animate-pulse-dot" />
+              模拟数据
+            </span>
+          ) : (
+            <span className="flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#475569]" />
+              连接中
+            </span>
+          )}
           <span>2026</span>
         </div>
       </div>

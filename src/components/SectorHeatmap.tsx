@@ -1,5 +1,6 @@
 'use client';
 import { Flame } from 'lucide-react';
+import InfoTip from './InfoTip';
 import { useSWSectorFlows } from '@/hooks/useMarketData';
 
 function intensityColor(netInflow: number): string {
@@ -32,6 +33,7 @@ export default function SectorHeatmap() {
         <div className="flex items-center gap-2">
           <Flame size={16} style={{ color: 'var(--accent-red)' }} />
           <span className="text-sm font-semibold">申万行业热力图</span>
+          <InfoTip text="以色块面积和颜色深浅展示申万一级行业的资金流向强度。红色代表资金净流入，绿色代表净流出，颜色越深表示资金流动越剧烈，帮助快速识别当日热门和冷门板块。" />
         </div>
         <div className="flex items-center gap-3 text-xs" style={{ color: 'var(--muted)' }}>
           <span className="flex items-center gap-1">

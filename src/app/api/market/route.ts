@@ -1,7 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
 import path from 'path';
+
+export const dynamic = 'force-static';
 
 const execFileAsync = promisify(execFile);
 const SCRIPT = path.join(process.cwd(), 'scripts', 'akshare_service.py');
@@ -25,31 +27,15 @@ async function fetchPython(cmd: string, args: string[] = []) {
   }
 }
 
-export async function GET(req: NextRequest) {
-  const { searchParams } = req.nextUrl;
-  const action = searchParams.get('action') || 'overview';
-
-  const args: string[] = [];
-  if (action === 'quotes' && searchParams.get('codes')) {
-    args.push(searchParams.get('codes')!);
-  }
-  if (action === 'kline' && searchParams.get('code')) {
-    args.push(searchParams.get('code')!);
-  }
-
-  // 有效 action: overview, quotes, kline, sectors, events
-  const validActions = ['overview', 'quotes', 'kline', 'sectors', 'events', 'scanner', 'swsectors'];
-  if (!validActions.includes(action)) {
-    return NextResponse.json({ error: `unknown action: ${action}` }, { status: 400 });
-  }
-
-  const data = await fetchPython(action, args);
+export async function GET() {
+  // Static export: return overview data as default
+  const data = await fetchPython('overview');
   if (data !== null) {
     return NextResponse.json(data);
   }
 
   return NextResponse.json(
-    { error: `data source unavailable for action: ${action}` },
+    { error: 'data source unavailable' },
     { status: 502 },
   );
 }

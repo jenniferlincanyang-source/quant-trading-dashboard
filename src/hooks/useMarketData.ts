@@ -3,7 +3,11 @@ import { useState, useEffect, useCallback } from 'react';
 import type {
   MarketOverview, OracleEvent, StrategySignal,
   KLineData, SectorFlow, RealTimeQuote, DataSource,
-  ScannerStock, SWSector,
+  ScannerStock, SWSector, EventNews, StrategyInsight, InsightType,
+  PriceTick, MarketFundFlowSummary, KLineWithFlow,
+  CapitalAlert, MultiPeriodTrend, OracleAccuracyStats,
+  PortfolioSummary, TradingAlert, HuijinMonitorData, SSFMonitorData,
+  BrokerMonitorData,
 } from '@/services/types';
 import * as api from '@/services/dataService';
 
@@ -75,4 +79,61 @@ export function useScannerStocks() {
 
 export function useSWSectorFlows() {
   return useDataFetcher<SWSector[]>(api.getSWSectorFlows, 30000);
+}
+
+export function useEventNews() {
+  return useDataFetcher<EventNews[]>(api.getEventNews, 60000);
+}
+
+export function useStrategyInsights(type: InsightType) {
+  const fetcher = useCallback(() => api.getStrategyInsights(type), [type]);
+  return useDataFetcher<StrategyInsight[]>(fetcher, 60000);
+}
+
+// === 新增: 交易指挥中心 Hooks ===
+
+export function usePriceTicks() {
+  return useDataFetcher<PriceTick[]>(api.getPriceTicks, 5000);
+}
+
+export function useMarketFundFlow() {
+  return useDataFetcher<MarketFundFlowSummary>(api.getMarketFundFlow, 30000);
+}
+
+export function useKLineWithFlow(code: string) {
+  const fetcher = useCallback(() => api.getKLineWithFlow(code), [code]);
+  return useDataFetcher<KLineWithFlow[]>(fetcher);
+}
+
+export function useCapitalAlerts() {
+  return useDataFetcher<CapitalAlert[]>(api.getCapitalAlerts, 15000);
+}
+
+export function useMultiPeriodTrend(code: string) {
+  const fetcher = useCallback(() => api.getMultiPeriodTrend(code), [code]);
+  return useDataFetcher<MultiPeriodTrend>(fetcher, 60000);
+}
+
+export function useOracleAccuracy() {
+  return useDataFetcher<OracleAccuracyStats>(api.getOracleAccuracy, 60000);
+}
+
+export function usePortfolioSummary() {
+  return useDataFetcher<PortfolioSummary>(api.getPortfolioSummary, 30000);
+}
+
+export function useTradingAlerts() {
+  return useDataFetcher<TradingAlert[]>(api.getTradingAlerts, 10000);
+}
+
+export function useHuijinMonitor() {
+  return useDataFetcher<HuijinMonitorData>(api.getHuijinMonitor, 60000);
+}
+
+export function useSSFMonitor() {
+  return useDataFetcher<SSFMonitorData>(api.getSSFMonitor, 60000);
+}
+
+export function useBrokerMonitor() {
+  return useDataFetcher<BrokerMonitorData>(api.getBrokerMonitor, 60000);
 }

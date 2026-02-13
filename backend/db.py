@@ -51,7 +51,46 @@ async def _init_tables(db: aiosqlite.Connection) -> None:
         );
 
         INSERT OR IGNORE INTO account (id, cash) VALUES (1, 500000);
+
+        CREATE TABLE IF NOT EXISTS data_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            data_type TEXT NOT NULL,
+            data_id TEXT,
+            snapshot_time TEXT NOT NULL,
+            data_json TEXT NOT NULL,
+            stock_code TEXT,
+            stock_name TEXT,
+            summary TEXT,
+            impact TEXT,
+            created_at TEXT DEFAULT (datetime('now','localtime'))
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_dh_type_time
+            ON data_history (data_type, snapshot_time DESC);
+        CREATE INDEX IF NOT EXISTS idx_dh_stock_type
+            ON data_history (stock_code, data_type);
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_dh_type_dataid
+            ON data_history (data_type, data_id)
+            WHERE data_id IS NOT NULL;
+
+        CREATE TABLE IF NOT EXISTS persist_config (
+            data_type TEXT PRIMARY KEY,
+            enabled INTEGER DEFAULT 1,
+            updated_at TEXT DEFAULT (datetime('now','localtime'))
+        );
     """)
+
+    # seed all known data types
+    known_types = [
+        'oracle_event', 'news', 'quote', 'scanner', 'sector',
+        'insight_trend', 'insight_meanrev', 'insight_statarb',
+        'insight_hft', 'insight_mf', 'price_tick', 'fund_flow',
+        'capital_alert', 'trading_alert', 'huijin', 'ssf', 'broker',
+    ]
+    await db.executemany(
+        "INSERT OR IGNORE INTO persist_config (data_type) VALUES (?)",
+        [(t,) for t in known_types],
+    )
     await db.commit()
 
 

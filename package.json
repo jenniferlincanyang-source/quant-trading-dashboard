@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:backend": "cd backend && uvicorn main:app --reload --port 8000",
+    "dev:all": "npm run dev:backend & npm run dev & wait",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"

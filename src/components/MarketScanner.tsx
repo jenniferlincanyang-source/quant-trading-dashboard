@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { TrendingUp, Zap } from 'lucide-react';
+import InfoTip from './InfoTip';
 import { useScannerStocks } from '@/hooks/useMarketData';
 import type { SelectedStock } from '@/services/types';
 
@@ -55,6 +56,7 @@ export default function MarketScanner({ onSelectStock, selectedCode }: Props) {
         <div className="flex items-center gap-2">
           <Zap size={16} style={{ color: 'var(--accent-amber)' }} />
           <span className="text-sm font-semibold">全市场扫描 Top30</span>
+          <InfoTip text="综合涨跌幅、换手率、成交量、多因子评分等指标，从全市场筛选出评分最高的 30 只个股。新进入排行榜的个股会闪烁提示，点击可查看详细K线和趋势分析。" />
         </div>
         <span className="text-xs" style={{ color: 'var(--muted)' }}>
           {stocks.length} 只
