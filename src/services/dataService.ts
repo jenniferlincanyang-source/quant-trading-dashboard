@@ -27,10 +27,19 @@ interface SourceReport {
 
 const _sourceReports = new Map<string, SourceReport>();
 const _listeners = new Set<() => void>();
+const _appStartTime = Date.now();
+const WARMUP_MS = 20_000; // 20 秒启动缓冲期
 
-type SourceSnap = { overall: DataSourceStatus; mockActions: string[]; liveCount: number; mockCount: number; lastUpdate: number };
+type SourceSnap = {
+  overall: DataSourceStatus;
+  mockActions: string[];
+  liveCount: number;
+  mockCount: number;
+  lastUpdate: number;
+  warming: boolean;
+};
 
-const _serverSnap: SourceSnap = { overall: 'unknown', mockActions: [], liveCount: 0, mockCount: 0, lastUpdate: 0 };
+const _serverSnap: SourceSnap = { overall: 'unknown', mockActions: [], liveCount: 0, mockCount: 0, lastUpdate: 0, warming: true };
 let _cachedSnap: SourceSnap = _serverSnap;
 
 function _buildSnapshot(): SourceSnap {
@@ -42,9 +51,10 @@ function _buildSnapshot(): SourceSnap {
     else if (r.status === 'mock') { mockCount++; mockActions.push(r.action); }
     if (r.timestamp > lastUpdate) lastUpdate = r.timestamp;
   });
+  const warming = Date.now() - _appStartTime < WARMUP_MS;
   const overall: DataSourceStatus =
     _sourceReports.size === 0 ? 'unknown' : mockCount === 0 ? 'live' : 'mock';
-  return { overall, mockActions, liveCount, mockCount, lastUpdate };
+  return { overall, mockActions, liveCount, mockCount, lastUpdate, warming };
 }
 
 function reportSource(action: string, status: DataSourceStatus) {
@@ -64,6 +74,12 @@ export function getSourceSnapshot(): SourceSnap {
 
 export function getServerSnapshot(): SourceSnap {
   return _serverSnap;
+}
+
+/** 强制重新计算快照并通知订阅者 */
+export function refreshSnapshot() {
+  _cachedSnap = _buildSnapshot();
+  _listeners.forEach(fn => fn());
 }
 
 async function fetchLive<T>(endpoint: string): Promise<T | null> {

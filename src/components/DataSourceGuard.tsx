@@ -1,8 +1,7 @@
 'use client';
-import { useState, useEffect, useSyncExternalStore } from 'react';
-import { AlertTriangle, Wifi, WifiOff, X, ChevronDown, ChevronUp } from 'lucide-react';
-import { subscribeSourceStatus, getSourceSnapshot, getServerSnapshot } from '@/services/dataService';
-import type { DataSourceStatus } from '@/services/dataService';
+import { useState, useEffect, useSyncExternalStore, useCallback } from 'react';
+import { AlertTriangle, Wifi, WifiOff, X, ChevronDown, ChevronUp, Loader2, RefreshCw } from 'lucide-react';
+import { subscribeSourceStatus, getSourceSnapshot, getServerSnapshot, refreshSnapshot } from '@/services/dataService';
 
 function useSourceStatus() {
   return useSyncExternalStore(subscribeSourceStatus, getSourceSnapshot, getServerSnapshot);
@@ -13,16 +12,27 @@ export default function DataSourceGuard() {
   const [dismissed, setDismissed] = useState(false);
   const [showDetail, setShowDetail] = useState(false);
 
-  // 从 mock 恢复到 live 时自动重新显示
+  // live 恢复时重新显示
   useEffect(() => {
     if (status.overall === 'live') setDismissed(false);
   }, [status.overall]);
 
+  // 缓冲期结束后强制刷新快照
+  useEffect(() => {
+    if (status.warming) {
+      const id = setTimeout(() => refreshSnapshot(), 21_000);
+      return () => clearTimeout(id);
+    }
+  }, [status.warming]);
+
   if (status.overall === 'unknown') return null;
-  if (status.overall === 'live' && !dismissed) {
-    return <LiveBadge liveCount={status.liveCount} />;
-  }
   if (status.overall === 'live') return null;
+
+  // 缓冲期内：显示蓝色"连接中"
+  if (status.warming && status.overall === 'mock') {
+    return <ConnectingBanner mockCount={status.mockCount} total={status.mockCount + status.liveCount} />;
+  }
+
   if (dismissed) return <DismissedHint onClick={() => setDismissed(false)} mockCount={status.mockCount} />;
 
   return (
@@ -44,6 +54,10 @@ export default function DataSourceGuard() {
             </p>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
+            <button onClick={() => window.location.reload()}
+              className="text-xs text-white/80 hover:text-white flex items-center gap-1 px-2 py-1 rounded hover:bg-white/10 transition-colors">
+              <RefreshCw className="w-3 h-3" /> 重试
+            </button>
             <button onClick={() => setShowDetail(!showDetail)}
               className="text-xs text-white/80 hover:text-white flex items-center gap-1 px-2 py-1 rounded hover:bg-white/10 transition-colors">
               详情 {showDetail ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
@@ -62,8 +76,20 @@ export default function DataSourceGuard() {
   );
 }
 
-function LiveBadge({ liveCount }: { liveCount: number }) {
-  return null; // Header 里的指示灯已经够了，live 时不额外显示
+function ConnectingBanner({ mockCount, total }: { mockCount: number; total: number }) {
+  return (
+    <div className="sticky top-[57px] z-40">
+      <div className="bg-[#3b82f6]/90 backdrop-blur-sm border-b border-[#3b82f6]">
+        <div className="mx-auto max-w-[1600px] px-4 py-2 flex items-center gap-3">
+          <Loader2 className="w-4 h-4 text-white animate-spin flex-shrink-0" />
+          <span className="text-sm text-white">
+            正在连接数据源… 已连接 {total - mockCount}/{total}
+          </span>
+          <span className="text-xs text-white/60">首次加载可能需要 10-30 秒</span>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function DismissedHint({ onClick, mockCount }: { onClick: () => void; mockCount: number }) {

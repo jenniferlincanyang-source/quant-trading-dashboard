@@ -1,12 +1,8 @@
 'use client';
-import { useMemo, useState } from 'react';
-import {
-  TrendingUp, GitCompare, Scale, Zap, Layers, Newspaper,
-  Play, Loader2, CheckCircle2, XCircle,
-} from 'lucide-react';
+import { useMemo } from 'react';
+import { TrendingUp, GitCompare, Scale, Zap, Layers, Newspaper } from 'lucide-react';
 import { LineChart, Line, ResponsiveContainer } from 'recharts';
 import { useStrategySignals } from '@/hooks/useMarketData';
-import { executeTrade } from '@/services/tradeService';
 import EventNewsPanel from './EventNewsPanel';
 import StrategyInsightPanel from './StrategyInsightPanel';
 import InfoTip from './InfoTip';
@@ -15,7 +11,7 @@ import {
   STRATEGY_CATEGORIES, STRATEGY_CATEGORY_MAP, RISK_LABELS,
 } from '@/services/types';
 import type {
-  StrategyCategory, StrategySignal, RiskLevel,
+  StrategyCategory, StrategySignal,
 } from '@/services/types';
 
 const ICONS: Record<StrategyCategory, typeof TrendingUp> = {
@@ -37,7 +33,6 @@ const INSIGHT_TYPES: InsightType[] = ['trend_follow', 'mean_reversion', 'stat_ar
 
 export default function StrategyMatrix() {
   const { data: allSignals, loading } = useStrategySignals();
-  const [executing, setExecuting] = useState<Record<string, 'idle' | 'loading' | 'success' | 'fail'>>({});
 
   const grouped = useMemo(() => {
     const map: Record<StrategyCategory, StrategySignal[]> = {
@@ -50,23 +45,6 @@ export default function StrategyMatrix() {
     }
     return map;
   }, [allSignals]);
-
-  const handleExecute = async (sig: StrategySignal) => {
-    if (sig.signal === 'hold') return;
-    setExecuting(prev => ({ ...prev, [sig.id]: 'loading' }));
-    try {
-      const res = await executeTrade({
-        signal_id: sig.id, stock_code: sig.stockCode,
-        stock_name: sig.stockName, direction: sig.signal as 'buy' | 'sell',
-        price: 0, volume: 0, strategy: sig.strategy, confidence: sig.confidence,
-      });
-      setExecuting(prev => ({ ...prev, [sig.id]: res.success ? 'success' : 'fail' }));
-      setTimeout(() => setExecuting(prev => ({ ...prev, [sig.id]: 'idle' })), 3000);
-    } catch {
-      setExecuting(prev => ({ ...prev, [sig.id]: 'fail' }));
-      setTimeout(() => setExecuting(prev => ({ ...prev, [sig.id]: 'idle' })), 3000);
-    }
-  };
 
   return (
     <div className="space-y-4">
@@ -81,8 +59,6 @@ export default function StrategyMatrix() {
             cat={cat}
             signals={grouped[cat.key]}
             loading={loading}
-            executing={executing}
-            onExecute={handleExecute}
           />
         ))}
       </div>
@@ -90,12 +66,10 @@ export default function StrategyMatrix() {
   );
 }
 
-function StrategyCard({ cat, signals, loading, executing, onExecute }: {
+function StrategyCard({ cat, signals, loading }: {
   cat: typeof STRATEGY_CATEGORIES[number];
   signals: StrategySignal[];
   loading: boolean;
-  executing: Record<string, 'idle' | 'loading' | 'success' | 'fail'>;
-  onExecute: (sig: StrategySignal) => void;
 }) {
   const Icon = ICONS[cat.key];
   const avgConf = signals.length
@@ -107,9 +81,9 @@ function StrategyCard({ cat, signals, loading, executing, onExecute }: {
   const sellCount = signals.filter(s => s.signal === 'sell').length;
 
   return (
-    <div className="rounded-xl border border-[#1e293b] bg-[#111827] flex flex-col">
+    <div className="rounded-xl border border-[#1e293b] bg-[#111827] flex flex-col h-[460px]">
       {/* header */}
-      <div className="px-4 py-3 border-b border-[#1e293b]">
+      <div className="px-4 py-3 border-b border-[#1e293b] shrink-0">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <Icon size={16} style={{ color: cat.color }} />
@@ -139,13 +113,13 @@ function StrategyCard({ cat, signals, loading, executing, onExecute }: {
 
       {/* insight panel */}
       {cat.key === 'event_driven' ? (
-        <div className="px-3 pt-2"><EventNewsPanel /></div>
+        <div className="px-3 pt-2 shrink-0"><EventNewsPanel /></div>
       ) : INSIGHT_TYPES.includes(cat.key as InsightType) ? (
-        <div className="px-3 pt-2"><StrategyInsightPanel type={cat.key as InsightType} /></div>
+        <div className="px-3 pt-2 shrink-0"><StrategyInsightPanel type={cat.key as InsightType} /></div>
       ) : null}
 
       {/* signal list */}
-      <div className="flex-1 overflow-y-auto max-h-[240px] p-3 space-y-1.5">
+      <div className="flex-1 overflow-y-auto min-h-0 p-3 space-y-1.5">
         {loading ? (
           Array.from({ length: 2 }).map((_, i) => (
             <div key={i} className="h-14 rounded-lg bg-[#0a0f1a] animate-pulse" />
@@ -155,7 +129,6 @@ function StrategyCard({ cat, signals, loading, executing, onExecute }: {
         ) : (
           signals.map(sig => {
             const sc = signalColors[sig.signal];
-            const st = executing[sig.id] || 'idle';
             return (
               <div key={sig.id} className="flex items-center gap-2 p-2.5 rounded-lg bg-[#0a0f1a]/60 hover:bg-[#0a0f1a] transition-colors">
                 <div className="w-1 h-10 rounded-full" style={{ background: cat.color }} />
@@ -172,19 +145,6 @@ function StrategyCard({ cat, signals, loading, executing, onExecute }: {
                     <span className="truncate">{sig.factors.slice(0, 2).join(' · ')}</span>
                   </div>
                 </div>
-                {sig.signal !== 'hold' && (
-                  <button onClick={() => onExecute(sig)} disabled={st === 'loading'}
-                    className="shrink-0 w-7 h-7 rounded-lg flex items-center justify-center"
-                    style={{
-                      background: st === 'success' ? '#10b98120' : st === 'fail' ? '#ef444420' : `${cat.color}15`,
-                      color: st === 'success' ? '#10b981' : st === 'fail' ? '#ef4444' : cat.color,
-                    }}>
-                    {st === 'loading' ? <Loader2 size={12} className="animate-spin" /> :
-                     st === 'success' ? <CheckCircle2 size={12} /> :
-                     st === 'fail' ? <XCircle size={12} /> :
-                     <Play size={12} />}
-                  </button>
-                )}
               </div>
             );
           })
