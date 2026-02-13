@@ -116,9 +116,14 @@ function InsightCard({ insight }: { insight: StrategyInsight }) {
           {insight.keyMetrics && <MetricsBar metrics={insight.keyMetrics} />}
 
           <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-            <span className="inline-flex items-center gap-1 text-[10px] text-[#475569]">
-              {insight.source}
-            </span>
+            {insight.sourceUrl ? (
+              <a href={insight.sourceUrl} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-[10px] text-[#3b82f6] hover:text-[#60a5fa] transition-colors">
+                {insight.source} ↗
+              </a>
+            ) : (
+              <span className="text-[10px] text-[#475569]">{insight.source}</span>
+            )}
             {insight.verifiedDate && (
               <span className="text-[10px] text-[#475569]">验证 {insight.verifiedDate}</span>
             )}

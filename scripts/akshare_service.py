@@ -701,7 +701,7 @@ def _trend_insights(quotes, now_str, today_str):
             'id': f'ti_live_{i}', 'time': now_str.split(' ')[1],
             'datetime': now_str, 'lagDays': 0, 'verifiedDate': today_str,
             'title': title, 'summary': summary,
-            'source': '腾讯财经(实时)', 'sourceUrl': '',
+            'source': '腾讯财经(实时)', 'sourceUrl': _stock_url(q['code']),
             'relatedStocks': [q['name']], 'insightType': 'trend_follow',
             'signal': 'bullish', 'keyMetrics': metrics, 'analystViews': [],
         })
@@ -714,7 +714,7 @@ def _trend_insights(quotes, now_str, today_str):
             'datetime': now_str, 'lagDays': 0, 'verifiedDate': today_str,
             'title': f"{q['name']}跌破支撑{pct:+.2f}%，趋势转弱",
             'summary': f"{q['name']}下跌{pct:+.2f}%，成交额{amount_yi:.1f}亿，短期趋势信号转空。",
-            'source': '腾讯财经(实时)', 'sourceUrl': '',
+            'source': '腾讯财经(实时)', 'sourceUrl': _stock_url(q['code']),
             'relatedStocks': [q['name']], 'insightType': 'trend_follow',
             'signal': 'bearish',
             'keyMetrics': {'跌幅': f"{pct:+.2f}%", '成交额': f"{amount_yi:.1f}亿"},
@@ -740,7 +740,7 @@ def _mean_rev_insights(quotes, now_str, today_str):
             'datetime': now_str, 'lagDays': 0, 'verifiedDate': today_str,
             'title': f"{q['name']}回调{pct:+.2f}%，均值回归信号触发",
             'summary': f"{q['name']}下跌{pct:+.2f}%，{'PE '+str(round(pe,1))+'x ' if pe>0 else ''}偏离均值，存在回归机会。",
-            'source': '腾讯财经(实时)', 'sourceUrl': '',
+            'source': '腾讯财经(实时)', 'sourceUrl': _stock_url(q['code']),
             'relatedStocks': [q['name']], 'insightType': 'mean_reversion',
             'signal': 'bullish', 'keyMetrics': metrics, 'analystViews': [],
         })
@@ -753,7 +753,7 @@ def _mean_rev_insights(quotes, now_str, today_str):
             'datetime': now_str, 'lagDays': 0, 'verifiedDate': today_str,
             'title': f"{q['name']}涨{pct:+.2f}%偏离均值，注意回调风险",
             'summary': f"{q['name']}上涨{pct:+.2f}%，短期偏离均值较大，均值回归策略提示回调风险。",
-            'source': '腾讯财经(实时)', 'sourceUrl': '',
+            'source': '腾讯财经(实时)', 'sourceUrl': _stock_url(q['code']),
             'relatedStocks': [q['name']], 'insightType': 'mean_reversion',
             'signal': 'bearish',
             'keyMetrics': {'涨幅': f"{pct:+.2f}%", '成交额': f"{amount_yi:.1f}亿"},
@@ -788,7 +788,7 @@ def _stat_arb_insights(quotes, now_str, today_str):
             'datetime': now_str, 'lagDays': 0, 'verifiedDate': today_str,
             'title': f"{sector}配对: {q1['name']}vs{q2['name']}价差{spread:+.2f}%",
             'summary': f"{leader['name']}({leader['changePercent']:+.2f}%)跑赢{lagger['name']}({lagger['changePercent']:+.2f}%)，价差{abs(spread):.2f}%，存在收敛套利机会。",
-            'source': '腾讯财经(实时)', 'sourceUrl': '',
+            'source': '腾讯财经(实时)', 'sourceUrl': _stock_url(q['code']),
             'relatedStocks': [q1['name'], q2['name']],
             'insightType': 'stat_arb', 'signal': signal,
             'keyMetrics': {
@@ -822,7 +822,7 @@ def _hft_insights(quotes, now_str, today_str):
                 'datetime': now_str, 'lagDays': 0, 'verifiedDate': today_str,
                 'title': f'{name}换手率{turnover:.1f}%振幅仅{amplitude:.1f}%，做市策略适用',
                 'summary': f'{name}高换手({turnover:.1f}%)但振幅低({amplitude:.1f}%)，成交额{amount_yi:.1f}亿，流动性充裕且波动可控，适合高频做市策略。',
-                'source': '腾讯财经(实时)', 'sourceUrl': '',
+                'source': '腾讯财经(实时)', 'sourceUrl': _stock_url(q['code']),
                 'relatedStocks': [name], 'insightType': 'hft', 'signal': 'bullish',
                 'keyMetrics': {'换手率': f'{turnover:.1f}%', '振幅': f'{amplitude:.1f}%', '成交额': f'{amount_yi:.1f}亿'},
                 'analystViews': [],
@@ -835,7 +835,7 @@ def _hft_insights(quotes, now_str, today_str):
                 'datetime': now_str, 'lagDays': 0, 'verifiedDate': today_str,
                 'title': f'{name}成交{amount_yi:.0f}亿涨跌{chg:+.1f}%，订单流动量信号',
                 'summary': f'{name}成交额{amount_yi:.0f}亿，涨跌{chg:+.2f}%，订单流方向偏{("多" if chg > 0 else "空")}，高频动量策略可介入。',
-                'source': '腾讯财经(实时)', 'sourceUrl': '',
+                'source': '腾讯财经(实时)', 'sourceUrl': _stock_url(q['code']),
                 'relatedStocks': [name], 'insightType': 'hft', 'signal': signal,
                 'keyMetrics': {'成交额': f'{amount_yi:.0f}亿', '涨跌': f'{chg:+.2f}%', '换手': f'{turnover:.1f}%'},
                 'analystViews': [],
@@ -905,7 +905,7 @@ def _multi_factor_insights(quotes, now_str, today_str):
             'datetime': now_str, 'lagDays': 0, 'verifiedDate': today_str,
             'title': f'{name}多因子评分{score}分，{"强烈看多" if score >= 85 else "综合偏多" if score >= 75 else "中性偏多"}',
             'summary': f'{name}因子分解: {", ".join(factors)}。综合评分{score}/100。',
-            'source': '腾讯财经(实时)', 'sourceUrl': '',
+            'source': '腾讯财经(实时)', 'sourceUrl': _stock_url(q['code']),
             'relatedStocks': [name], 'insightType': 'multi_factor', 'signal': signal,
             'keyMetrics': {'评分': f'{score}', '涨跌': f'{chg:+.2f}%', 'PE': f'{pe:.0f}x', '换手': f'{turnover:.1f}%'},
             'analystViews': [],
@@ -914,7 +914,10 @@ def _multi_factor_insights(quotes, now_str, today_str):
     return insights[:5]
 
 
-def _code_to_eastmoney(code):
+def _stock_url(code):
+    """生成个股行情页真实链接 (东方财富)"""
+    prefix = '1' if code.startswith(('5', '6', '9')) else '0'
+    return f'https://quote.eastmoney.com/{prefix}{code}.html'
     """600519 → 1.600519, 000001 → 0.000001 (东方财富 secid)"""
     return ('1.' if code.startswith(('6', '9')) else '0.') + code
 

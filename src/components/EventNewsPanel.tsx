@@ -108,9 +108,14 @@ function NewsCard({ news }: { news: EventNews }) {
 
           {/* Source + stocks */}
           <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-            <span className="inline-flex items-center gap-1 text-[10px] text-[#475569]">
-              {news.source}
-            </span>
+            {news.sourceUrl ? (
+              <a href={news.sourceUrl} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-[10px] text-[#3b82f6] hover:text-[#60a5fa] transition-colors">
+                {news.source} ↗
+              </a>
+            ) : (
+              <span className="text-[10px] text-[#475569]">{news.source}</span>
+            )}
             {news.verifiedDate && (
               <span className="text-[10px] text-[#475569]">验证 {news.verifiedDate}</span>
             )}
