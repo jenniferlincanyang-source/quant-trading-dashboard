@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import { Database, ArrowRight, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import InfoTip from './InfoTip';
 import { useHistoryStats } from '@/hooks/useHistoryData';
@@ -64,10 +65,10 @@ export default function HistoryQuickView() {
             {stats.total_records} 条
           </span>
         </div>
-        <a href="/history"
+        <Link href="/history"
           className="flex items-center gap-1 text-[10px] text-[#3b82f6] hover:text-[#60a5fa] transition-colors">
           查看全部 <ArrowRight size={10} />
-        </a>
+        </Link>
       </div>
 
       {/* 24h 类型统计 */}

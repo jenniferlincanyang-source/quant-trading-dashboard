@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import { useState, useRef, useEffect, useSyncExternalStore } from 'react';
 import { Search, Sparkles, X, Database, Wifi, WifiOff } from 'lucide-react';
 import { useSearch } from '@/hooks/useSearch';
@@ -58,10 +59,10 @@ export default function Header() {
         </div>
 
         <div className="flex items-center gap-3 text-xs text-[#64748b] shrink-0">
-          <a href="/history" className="flex items-center gap-1 hover:text-[#94a3b8] transition-colors">
+          <Link href="/history" className="flex items-center gap-1 hover:text-[#94a3b8] transition-colors">
             <Database className="w-3.5 h-3.5" />
             历史数据
-          </a>
+          </Link>
           {status.overall === 'live' ? (
             <span className="flex items-center gap-1 text-[#10b981]">
               <Wifi className="w-3.5 h-3.5" />
