@@ -39,12 +39,13 @@ export default function Dashboard() {
         {/* 实时行情滚动条 */}
         <PriceTicker />
 
-        {/* 策略矩阵 + Oracle 流 */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4" style={{ minHeight: '520px' }}>
-          <div className="lg:col-span-3">
-            <StrategyMatrix />
-          </div>
+        {/* 策略矩阵（六大策略平铺） */}
+        <StrategyMatrix />
+
+        {/* Oracle 真相流 + 历史验证 */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4" style={{ minHeight: '360px' }}>
           <OracleStream stockCode={selectedStock?.code} />
+          <OracleVerification />
         </div>
 
         {/* Scanner 排行榜 + 行业热力图 */}
@@ -102,9 +103,6 @@ export default function Dashboard() {
           </div>
           <TrendPrediction stockCode={selectedStock?.code ?? '688981'} />
         </div>
-
-        {/* Oracle 历史验证 */}
-        <OracleVerification />
 
         <HistoryQuickView />
 

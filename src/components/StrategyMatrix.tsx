@@ -1,22 +1,22 @@
 'use client';
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
   TrendingUp, GitCompare, Scale, Zap, Layers, Newspaper,
-  Play, Loader2, CheckCircle2, XCircle, Activity,
+  Play, Loader2, CheckCircle2, XCircle,
 } from 'lucide-react';
 import { LineChart, Line, ResponsiveContainer } from 'recharts';
 import { useStrategySignals } from '@/hooks/useMarketData';
 import { executeTrade } from '@/services/tradeService';
 import EventNewsPanel from './EventNewsPanel';
 import StrategyInsightPanel from './StrategyInsightPanel';
+import InfoTip from './InfoTip';
 import type { InsightType } from '@/services/types';
 import {
   STRATEGY_CATEGORIES, STRATEGY_CATEGORY_MAP, RISK_LABELS,
 } from '@/services/types';
 import type {
-  StrategyCategory, StrategyCategoryMeta, StrategySignal, RiskLevel,
+  StrategyCategory, StrategySignal, RiskLevel,
 } from '@/services/types';
-import type { TradeResponse } from '@/services/tradeService';
 
 const ICONS: Record<StrategyCategory, typeof TrendingUp> = {
   trend_follow: TrendingUp,
@@ -27,204 +27,18 @@ const ICONS: Record<StrategyCategory, typeof TrendingUp> = {
   event_driven: Newspaper,
 };
 
-type ActivityLevel = 'active' | 'moderate' | 'inactive';
-
-function getActivity(signals: StrategySignal[]): ActivityLevel {
-  if (signals.length === 0) return 'inactive';
-  const avg = signals.reduce((s, x) => s + x.confidence, 0) / signals.length;
-  if (signals.length >= 3 && avg > 0.6) return 'active';
-  return 'moderate';
-}
-
-const activityColors: Record<ActivityLevel, string> = {
-  active: 'bg-emerald-400',
-  moderate: 'bg-amber-400',
-  inactive: 'bg-slate-600',
-};
-
 const signalColors = {
   buy: { bg: 'bg-[#10b981]/10', text: 'text-[#10b981]', label: '买入' },
   sell: { bg: 'bg-[#ef4444]/10', text: 'text-[#ef4444]', label: '卖出' },
   hold: { bg: 'bg-[#f59e0b]/10', text: 'text-[#f59e0b]', label: '持有' },
 };
 
-/* ── Sidebar ── */
-function Sidebar({
-  active, onSelect, grouped, loading,
-}: {
-  active: StrategyCategory;
-  onSelect: (c: StrategyCategory) => void;
-  grouped: Record<StrategyCategory, StrategySignal[]>;
-  loading: boolean;
-}) {
-  return (
-    <div className="w-[200px] shrink-0 border-r border-white/5 py-3 flex flex-col gap-1">
-      {STRATEGY_CATEGORIES.map(cat => {
-        const Icon = ICONS[cat.key];
-        const sigs = grouped[cat.key];
-        const act = getActivity(sigs);
-        const isActive = active === cat.key;
-        return (
-          <button
-            key={cat.key}
-            onClick={() => onSelect(cat.key)}
-            className={`flex items-center gap-2.5 px-3 py-2.5 text-left transition-all rounded-r-lg mx-1 ${
-              isActive
-                ? 'bg-white/5 border-l-2'
-                : 'hover:bg-white/[0.03] border-l-2 border-transparent'
-            }`}
-            style={isActive ? {
-              borderColor: cat.color,
-              boxShadow: `0 0 15px ${cat.color}33`,
-            } : undefined}
-          >
-            <Icon size={16} style={{ color: isActive ? cat.color : '#64748b' }} />
-            <span className={`text-sm flex-1 truncate ${isActive ? 'text-white' : 'text-[#94a3b8]'}`}>
-              {cat.label}
-            </span>
-            <span className={`w-2 h-2 rounded-full ${activityColors[act]} ${act === 'active' ? 'animate-pulse-dot' : ''}`} />
-            {!loading && sigs.length > 0 && (
-              <span className="text-[10px] text-[#64748b] min-w-[16px] text-right">{sigs.length}</span>
-            )}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-/* ── DetailHeader ── */
-function DetailHeader({
-  meta, signals, avgConf, avgReturn,
-}: {
-  meta: StrategyCategoryMeta;
-  signals: StrategySignal[];
-  avgConf: number;
-  avgReturn: number;
-}) {
-  const sparkData = signals.map((s, i) => ({ i, v: s.confidence }));
-  return (
-    <div className="space-y-3">
-      <div className="flex items-start justify-between">
-        <div>
-          <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full" style={{ background: meta.color }} />
-            {meta.label}
-          </h3>
-          <p className="text-xs text-[#64748b] mt-0.5">{meta.logic}</p>
-        </div>
-        <div className="flex gap-1">
-          {meta.cases.map(c => (
-            <span key={c} className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-[#94a3b8]">{c}</span>
-          ))}
-        </div>
-      </div>
-      <div className="flex items-center gap-4 text-xs">
-        <Stat label="信号数" value={String(signals.length)} />
-        <Stat label="平均置信度" value={`${(avgConf * 100).toFixed(0)}%`} />
-        <Stat label="平均预期收益" value={`${avgReturn.toFixed(1)}%`} color={avgReturn >= 0 ? '#10b981' : '#ef4444'} />
-        <Stat label="适用行情" value={meta.applicable} />
-        {sparkData.length >= 2 && (
-          <div className="w-20 h-8 ml-auto">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={sparkData}>
-                <Line type="monotone" dataKey="v" stroke={meta.color} strokeWidth={1.5} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function Stat({ label, value, color }: { label: string; value: string; color?: string }) {
-  return (
-    <div>
-      <div className="text-[#475569]">{label}</div>
-      <div className="font-medium mt-0.5" style={{ color: color || '#e2e8f0' }}>{value}</div>
-    </div>
-  );
-}
-
-/* ── RiskFilter ── */
-function RiskFilter({ value, onChange }: { value: RiskLevel | 'all'; onChange: (v: RiskLevel | 'all') => void }) {
-  const opts: { key: RiskLevel | 'all'; label: string }[] = [
-    { key: 'all', label: '全部' },
-    { key: 'low', label: '低风险' },
-    { key: 'medium', label: '中风险' },
-    { key: 'high', label: '高风险' },
-  ];
-  return (
-    <div className="flex gap-1.5 mt-3">
-      {opts.map(o => (
-        <button
-          key={o.key}
-          onClick={() => onChange(o.key)}
-          className={`text-[11px] px-2 py-1 rounded transition-colors ${
-            value === o.key ? 'bg-white/10 text-white' : 'text-[#64748b] hover:text-[#94a3b8]'
-          }`}
-        >
-          {o.label}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-/* ── SignalCard ── */
-function SignalCard({
-  sig, color, state, onExecute,
-}: {
-  sig: StrategySignal;
-  color: string;
-  state: 'idle' | 'loading' | 'success' | 'fail';
-  onExecute: () => void;
-}) {
-  const sc = signalColors[sig.signal];
-  return (
-    <div className="flex items-center gap-3 p-3 rounded-lg bg-[#0a0f1a]/60 hover:bg-[#0a0f1a] transition-colors group">
-      <div className="w-1 h-12 rounded-full" style={{ background: color }} />
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-white">{sig.stockName}</span>
-          <span className="text-[10px] text-[#475569]">{sig.stockCode}</span>
-          <span className={`text-[10px] px-1.5 py-0.5 rounded ${sc.bg} ${sc.text}`}>{sc.label}</span>
-          <span className="text-[10px] text-[#475569]">{RISK_LABELS[sig.riskLevel]}</span>
-        </div>
-        <div className="flex items-center gap-3 mt-1 text-[10px] text-[#64748b]">
-          <span>置信度 {(sig.confidence * 100).toFixed(0)}%</span>
-          <span>预期 {sig.expectedReturn > 0 ? '+' : ''}{sig.expectedReturn.toFixed(1)}%</span>
-          <span className="truncate">{sig.factors.slice(0, 2).join(' · ')}</span>
-        </div>
-      </div>
-      {sig.signal !== 'hold' && (
-        <button
-          onClick={onExecute}
-          disabled={state === 'loading'}
-          className="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
-          style={{
-            background: state === 'success' ? '#10b98120' : state === 'fail' ? '#ef444420' : `${color}15`,
-            color: state === 'success' ? '#10b981' : state === 'fail' ? '#ef4444' : color,
-          }}
-        >
-          {state === 'loading' ? <Loader2 size={14} className="animate-spin" /> :
-           state === 'success' ? <CheckCircle2 size={14} /> :
-           state === 'fail' ? <XCircle size={14} /> :
-           <Play size={14} />}
-        </button>
-      )}
-    </div>
-  );
-}
+const INSIGHT_TYPES: InsightType[] = ['trend_follow', 'mean_reversion', 'stat_arb', 'hft', 'multi_factor'];
 
 export default function StrategyMatrix() {
   const { data: allSignals, loading } = useStrategySignals();
-  const [active, setActive] = useState<StrategyCategory>('trend_follow');
-  const [filterRisk, setFilterRisk] = useState<RiskLevel | 'all'>('all');
   const [executing, setExecuting] = useState<Record<string, 'idle' | 'loading' | 'success' | 'fail'>>({});
 
-  // 按分类分组信号
   const grouped = useMemo(() => {
     const map: Record<StrategyCategory, StrategySignal[]> = {
       trend_follow: [], mean_reversion: [], stat_arb: [],
@@ -237,31 +51,14 @@ export default function StrategyMatrix() {
     return map;
   }, [allSignals]);
 
-  const currentMeta = STRATEGY_CATEGORIES.find(c => c.key === active)!;
-  const currentSignals = grouped[active];
-  const filtered = filterRisk === 'all'
-    ? currentSignals
-    : currentSignals.filter(s => s.riskLevel === filterRisk);
-
-  const avgConf = currentSignals.length
-    ? currentSignals.reduce((s, x) => s + x.confidence, 0) / currentSignals.length
-    : 0;
-  const avgReturn = currentSignals.length
-    ? currentSignals.reduce((s, x) => s + x.expectedReturn, 0) / currentSignals.length
-    : 0;
-
   const handleExecute = async (sig: StrategySignal) => {
     if (sig.signal === 'hold') return;
     setExecuting(prev => ({ ...prev, [sig.id]: 'loading' }));
     try {
       const res = await executeTrade({
-        signal_id: sig.id,
-        stock_code: sig.stockCode,
-        stock_name: sig.stockName,
-        direction: sig.signal as 'buy' | 'sell',
-        price: 0, volume: 0,
-        strategy: sig.strategy,
-        confidence: sig.confidence,
+        signal_id: sig.id, stock_code: sig.stockCode,
+        stock_name: sig.stockName, direction: sig.signal as 'buy' | 'sell',
+        price: 0, volume: 0, strategy: sig.strategy, confidence: sig.confidence,
       });
       setExecuting(prev => ({ ...prev, [sig.id]: res.success ? 'success' : 'fail' }));
       setTimeout(() => setExecuting(prev => ({ ...prev, [sig.id]: 'idle' })), 3000);
@@ -272,51 +69,126 @@ export default function StrategyMatrix() {
   };
 
   return (
-    <div className="glass-card rounded-xl flex h-full min-h-[520px]">
-      {/* 左侧栏 */}
-      <Sidebar
-        active={active}
-        onSelect={setActive}
-        grouped={grouped}
-        loading={loading}
-      />
-      {/* 右侧详情 */}
-      <div className="flex-1 flex flex-col min-w-0 p-4">
-        <DetailHeader meta={currentMeta} signals={currentSignals} avgConf={avgConf} avgReturn={avgReturn} />
-        <RiskFilter value={filterRisk} onChange={setFilterRisk} />
-        {/* 事件驱动 — 新闻来源 + 机构分析面板 */}
-        {active === 'event_driven' && (
-          <div className="mt-3 mb-2">
-            <EventNewsPanel />
+    <div className="space-y-4">
+      <div className="flex items-center gap-2 px-1">
+        <span className="text-sm font-medium">六大量化策略信号总览</span>
+        <InfoTip text="展示趋势跟踪、均值回归、统计套利、高频交易、多因子、事件驱动六大策略的实时信号，全部平铺一目了然。每个策略卡片包含信号列表和策略洞察分析。" />
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+        {STRATEGY_CATEGORIES.map(cat => (
+          <StrategyCard
+            key={cat.key}
+            cat={cat}
+            signals={grouped[cat.key]}
+            loading={loading}
+            executing={executing}
+            onExecute={handleExecute}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function StrategyCard({ cat, signals, loading, executing, onExecute }: {
+  cat: typeof STRATEGY_CATEGORIES[number];
+  signals: StrategySignal[];
+  loading: boolean;
+  executing: Record<string, 'idle' | 'loading' | 'success' | 'fail'>;
+  onExecute: (sig: StrategySignal) => void;
+}) {
+  const Icon = ICONS[cat.key];
+  const avgConf = signals.length
+    ? signals.reduce((s, x) => s + x.confidence, 0) / signals.length : 0;
+  const avgReturn = signals.length
+    ? signals.reduce((s, x) => s + x.expectedReturn, 0) / signals.length : 0;
+  const sparkData = signals.map((s, i) => ({ i, v: s.confidence }));
+  const buyCount = signals.filter(s => s.signal === 'buy').length;
+  const sellCount = signals.filter(s => s.signal === 'sell').length;
+
+  return (
+    <div className="rounded-xl border border-[#1e293b] bg-[#111827] flex flex-col">
+      {/* header */}
+      <div className="px-4 py-3 border-b border-[#1e293b]">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <Icon size={16} style={{ color: cat.color }} />
+            <span className="text-sm font-medium">{cat.label}</span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-[#64748b]">{signals.length} 信号</span>
           </div>
-        )}
-        {/* 趋势跟踪/均值回归/统计套利/高频交易/多因子 — 策略洞察面板 */}
-        {(['trend_follow', 'mean_reversion', 'stat_arb', 'hft', 'multi_factor'] as InsightType[]).includes(active as InsightType) && (
-          <div className="mt-3 mb-2">
-            <StrategyInsightPanel type={active as InsightType} />
-          </div>
-        )}
-        <div className="flex-1 overflow-y-auto mt-3 space-y-2">
-          {loading ? (
-            Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="h-20 rounded-lg bg-[#0a0f1a] animate-pulse" />
-            ))
-          ) : filtered.length === 0 ? (
-            <div className="text-center text-[#475569] text-sm py-12">
-              该策略暂无{filterRisk !== 'all' ? ` ${RISK_LABELS[filterRisk]}` : ''}信号
+          {sparkData.length >= 2 && (
+            <div className="w-16 h-6">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={sparkData}>
+                  <Line type="monotone" dataKey="v" stroke={cat.color} strokeWidth={1.5} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
             </div>
-          ) : (
-            filtered.map(sig => (
-              <SignalCard
-                key={sig.id}
-                sig={sig}
-                color={currentMeta.color}
-                state={executing[sig.id] || 'idle'}
-                onExecute={() => handleExecute(sig)}
-              />
-            ))
           )}
         </div>
+        <p className="text-[10px] text-[#475569] mb-2">{cat.logic}</p>
+        <div className="flex items-center gap-3 text-[10px]">
+          <span className="text-[#94a3b8]">置信度 <span className="font-medium text-[#e2e8f0]">{(avgConf * 100).toFixed(0)}%</span></span>
+          <span className={avgReturn >= 0 ? 'text-[#10b981]' : 'text-[#ef4444]'}>
+            预期 {avgReturn > 0 ? '+' : ''}{avgReturn.toFixed(1)}%
+          </span>
+          {buyCount > 0 && <span className="text-[#10b981]">买入 {buyCount}</span>}
+          {sellCount > 0 && <span className="text-[#ef4444]">卖出 {sellCount}</span>}
+        </div>
+      </div>
+
+      {/* insight panel */}
+      {cat.key === 'event_driven' ? (
+        <div className="px-3 pt-2"><EventNewsPanel /></div>
+      ) : INSIGHT_TYPES.includes(cat.key as InsightType) ? (
+        <div className="px-3 pt-2"><StrategyInsightPanel type={cat.key as InsightType} /></div>
+      ) : null}
+
+      {/* signal list */}
+      <div className="flex-1 overflow-y-auto max-h-[240px] p-3 space-y-1.5">
+        {loading ? (
+          Array.from({ length: 2 }).map((_, i) => (
+            <div key={i} className="h-14 rounded-lg bg-[#0a0f1a] animate-pulse" />
+          ))
+        ) : signals.length === 0 ? (
+          <div className="text-center text-[#475569] text-xs py-6">暂无信号</div>
+        ) : (
+          signals.map(sig => {
+            const sc = signalColors[sig.signal];
+            const st = executing[sig.id] || 'idle';
+            return (
+              <div key={sig.id} className="flex items-center gap-2 p-2.5 rounded-lg bg-[#0a0f1a]/60 hover:bg-[#0a0f1a] transition-colors">
+                <div className="w-1 h-10 rounded-full" style={{ background: cat.color }} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-medium text-white">{sig.stockName}</span>
+                    <span className="text-[10px] text-[#475569]">{sig.stockCode}</span>
+                    <span className={`text-[10px] px-1 py-0.5 rounded ${sc.bg} ${sc.text}`}>{sc.label}</span>
+                    <span className="text-[10px] text-[#475569]">{RISK_LABELS[sig.riskLevel]}</span>
+                  </div>
+                  <div className="flex items-center gap-2 mt-0.5 text-[10px] text-[#64748b]">
+                    <span>{(sig.confidence * 100).toFixed(0)}%</span>
+                    <span>{sig.expectedReturn > 0 ? '+' : ''}{sig.expectedReturn.toFixed(1)}%</span>
+                    <span className="truncate">{sig.factors.slice(0, 2).join(' · ')}</span>
+                  </div>
+                </div>
+                {sig.signal !== 'hold' && (
+                  <button onClick={() => onExecute(sig)} disabled={st === 'loading'}
+                    className="shrink-0 w-7 h-7 rounded-lg flex items-center justify-center"
+                    style={{
+                      background: st === 'success' ? '#10b98120' : st === 'fail' ? '#ef444420' : `${cat.color}15`,
+                      color: st === 'success' ? '#10b981' : st === 'fail' ? '#ef4444' : cat.color,
+                    }}>
+                    {st === 'loading' ? <Loader2 size={12} className="animate-spin" /> :
+                     st === 'success' ? <CheckCircle2 size={12} /> :
+                     st === 'fail' ? <XCircle size={12} /> :
+                     <Play size={12} />}
+                  </button>
+                )}
+              </div>
+            );
+          })
+        )}
       </div>
     </div>
   );
